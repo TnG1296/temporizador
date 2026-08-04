@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1e1e24">
+<title>Temporizador</title>
+<style>
+  :root{
+    --bg:#1e1e24;
+    --panel:#26262e;
+    --texto:#e8e8ea;
+    --muted:#9a9aa5;
+    --accent:#7c5cff;
+    --accent-hover:#8f73ff;
+    --accent-txt:#ffffff;
+    --oro:#f0b429;
+    --chip-bg:#33333d;
+    --btn-bg:#33333d;
+    --btn-hover:#3f3f4b;
+    --fuente:"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg);
+    color:var(--texto);
+    font-family:var(--fuente);
+    min-height:100dvh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .cont{
+    width:100%;
+    max-width:420px;
+    padding:28px;
+    text-align:center;
+  }
+
+  h1{
+    margin:0;
+    font-size:26px;
+    font-weight:700;
+    letter-spacing:.5px;
+  }
+  .subtitulo{
+    margin:2px 0 16px;
+    color:var(--muted);
+    font-size:13px;
+  }
+
+  /* Selector de modalidad */
+  .modos{
+    display:flex;
+    justify-content:center;
+    gap:8px;
+    margin-bottom:18px;
+  }
+  .modo-btn{
+    padding:6px 14px;
+    font-size:13px;
+    font-weight:700;
+    border:0;
+    border-radius:8px;
+    cursor:pointer;
+    background:var(--chip-bg);
+    color:var(--muted);
+    font-family:inherit;
+    transition:background .12s,color .12s;
+  }
+  .modo-btn.activo{background:var(--accent);color:var(--accent-txt)}
+
+  /* Nivel y estado */
+  .lbl-nivel{
+    font-size:19px;
+    font-weight:700;
+    margin:6px 0 2px;
+  }
+  .lbl-estado{
+    color:var(--muted);
+    font-size:13px;
+    margin-bottom:16px;
+    min-height:1em;
+  }
+  .lbl-estado.marcha{color:var(--accent)}
+  .lbl-estado.victoria{color:var(--oro)}
+
+  /* Chips */
+  .chips{
+    display:flex;
+    justify-content:center;
+    gap:6px;
+    margin-bottom:22px;
+  }
+  .chip{
+    min-width:34px;
+    padding:6px 4px;
+    border-radius:6px;
+    background:var(--chip-bg);
+    color:var(--muted);
+    font-size:12px;
+    font-weight:700;
+  }
+  .chip.hecho{color:var(--accent)}
+  .chip.actual{background:var(--accent);color:var(--accent-txt)}
+
+  /* Botones */
+  .botones{
+    display:flex;
+    justify-content:center;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .btn{
+    padding:10px 18px;
+    border:0;
+    border-radius:8px;
+    cursor:pointer;
+    font-size:13px;
+    font-weight:700;
+    font-family:inherit;
+    background:var(--btn-bg);
+    color:var(--texto);
+    transition:background .12s;
+  }
+  .btn:hover{background:var(--btn-hover)}
+  .btn.primario{background:var(--accent);color:var(--accent-txt)}
+  .btn.primario:hover{background:var(--accent-hover)}
+  .btn:focus-visible{outline:2px solid var(--accent-hover);outline-offset:2px}
+
+  .fila2{margin-top:12px}
+
+  .nota-pie{
+    margin-top:18px;
+    color:var(--muted);
+    font-size:11px;
+  }
+
+  /* Modal Recomendaciones */
+  .overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.55);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    z-index:50;
+  }
+  .overlay.abierto{display:flex}
+  .modal{
+    background:var(--bg);
+    width:100%;
+    max-width:580px;
+    max-height:88dvh;
+    border-radius:12px;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+  }
+  .modal-cabecera{padding:16px 22px 12px;text-align:left}
+  .modal-cabecera h2{margin:0;font-size:16px;font-weight:700}
+  .modal-cabecera p{margin:2px 0 0;color:var(--muted);font-size:12px}
+  .modal-cuerpo{
+    margin:0 18px;
+    padding:14px 16px;
+    background:var(--panel);
+    border-radius:8px;
+    overflow-y:auto;
+    text-align:left;
+    font-size:14px;
+    line-height:1.5;
+  }
+  .modal-cuerpo .reco-h{
+    color:var(--accent);
+    font-size:15px;
+    font-weight:700;
+    margin:16px 0 6px;
+  }
+  .modal-cuerpo .reco-h:first-child{margin-top:0}
+  .modal-cuerpo .reco-p{margin:0 0 10px}
+  .modal-cuerpo .reco-li{
+    margin:0 0 8px;
+    padding-left:18px;
+    position:relative;
+  }
+  .modal-cuerpo .reco-li::before{
+    content:"•";
+    position:absolute;
+    left:2px;
+    color:var(--accent);
+    font-weight:700;
+  }
+  .modal-cuerpo em{color:var(--muted);font-style:italic}
+  .modal-cuerpo strong{font-weight:700}
+  .modal-pie{padding:14px 22px;text-align:right}
+
+  /* Toast propio (fallback de notificación) */
+  .toast{
+    position:fixed;
+    right:24px;
+    bottom:24px;
+    background:var(--panel);
+    border:2px solid var(--accent);
+    border-radius:8px;
+    padding:12px 16px;
+    max-width:280px;
+    text-align:left;
+    z-index:60;
+    opacity:0;
+    transform:translateY(8px);
+    transition:opacity .2s,transform .2s;
+    pointer-events:none;
+  }
+  .toast.visible{opacity:1;transform:translateY(0)}
+  .toast .t-titulo{font-size:14px;font-weight:700}
+  .toast .t-msg{font-size:12px;color:var(--muted);margin-top:2px}
+
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none!important}
+  }
+</style>
+</head>
+<body>
+  <main class="cont">
+    <h1>TEMPORIZADOR</h1>
+    <p class="subtitulo">bloques de foco en silencio</p>
+
+    <div class="modos">
+      <button class="modo-btn" id="btn-ascenso" type="button">↑ Ascenso</button>
+      <button class="modo-btn" id="btn-descenso" type="button">↓ Descenso</button>
+    </div>
+
+    <div class="lbl-nivel" id="lbl-nivel"></div>
+    <div class="lbl-estado" id="lbl-estado"></div>
+
+    <div class="chips" id="chips"></div>
+
+    <div class="botones">
+      <button class="btn primario" id="btn-start" type="button">INICIAR</button>
+      <button class="btn" id="btn-skip" type="button">Saltar</button>
+      <button class="btn" id="btn-reset" type="button">Reiniciar</button>
+    </div>
+
+    <div class="fila2">
+      <button class="btn" id="btn-reco" type="button">Recomendaciones</button>
+    </div>
+
+    <p class="nota-pie">el tiempo corre sin números · sin cuenta regresiva</p>
+  </main>
+
+  <!-- Modal Recomendaciones -->
+  <div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-labelledby="reco-titulo">
+    <div class="modal">
+      <div class="modal-cabecera">
+        <h2 id="reco-titulo">Recomendaciones</h2>
+        <p>cómo elegir el bloque y la dirección</p>
+      </div>
+      <div class="modal-cuerpo" id="reco-cuerpo"></div>
+      <div class="modal-pie">
+        <button class="btn primario" id="btn-cerrar-reco" type="button">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast" role="status" aria-live="polite">
+    <div class="t-titulo" id="toast-titulo"></div>
+    <div class="t-msg" id="toast-msg"></div>
+  </div>
+
+<script>
+(() => {
+  "use strict";
+
+  // ---------- Configuración ----------
+  const ASCENSO  = [5, 10, 20, 30, 40, 50];
+  const DESCENSO = [50, 40, 30, 20, 10, 5];
+  const STORAGE_KEY = "temporizador.estado";
+
+  // ---------- Persistencia (localStorage con fallback en memoria) ----------
+  // Replica ~/.temporizador/estado.json de la versión Python.
+  let _memoria = null;
+  function cargarEstado(){
+    const base = { modo:"ascenso", nivel:{ ascenso:0, descenso:0 } };
+    try{
+      const crudo = localStorage.getItem(STORAGE_KEY);
+      if(crudo){
+        const d = JSON.parse(crudo);
+        base.modo = d.modo === "descenso" ? "descenso" : "ascenso";
+        const n = d.nivel || {};
+        base.nivel.ascenso  = ((parseInt(n.ascenso,10)  || 0) % 6 + 6) % 6;
+        base.nivel.descenso = ((parseInt(n.descenso,10) || 0) % 6 + 6) % 6;
+      }
+    }catch(e){ /* sin storage: arranca en base */ }
+    return base;
+  }
+  function guardarEstado(){
+    const s = JSON.stringify(estado);
+    _memoria = s;
+    try{ localStorage.setItem(STORAGE_KEY, s); }catch(e){ /* queda en memoria */ }
+  }
+
+  // ---------- Estado ----------
+  let estado = cargarEstado();
+  let corriendo = false;
+  let restanteMs = null;   // ms que faltan del bloque actual
+  let t0 = 0;              // marca de tiempo del arranque
+  let timerId = null;
+
+  // ---------- Helpers de modo/nivel ----------
+  const modo = () => estado.modo;
+  const nivelIdx = () => estado.nivel[modo()];
+  function setNivelIdx(v){ estado.nivel[modo()] = ((v % 6) + 6) % 6; }
+  const seq = () => modo() === "ascenso" ? ASCENSO : DESCENSO;
+  const minActual = () => seq()[nivelIdx()];
+
+  // ---------- Referencias DOM ----------
+  const $ = id => document.getElementById(id);
+  const btnAscenso = $("btn-ascenso");
+  const btnDescenso = $("btn-descenso");
+  const lblNivel = $("lbl-nivel");
+  const lblEstado = $("lbl-estado");
+  const chips = $("chips");
+  const btnStart = $("btn-start");
+  const btnSkip = $("btn-skip");
+  const btnReset = $("btn-reset");
+  const btnReco = $("btn-reco");
+  const overlay = $("overlay");
+
+  // ---------- Modo ----------
+  function cambiarModo(nuevo){
+    if(nuevo === modo()) return;
+    detenerTimer();
+    corriendo = false;
+    restanteMs = null;
+    estado.modo = nuevo;
+    guardarEstado();
+    sincronizarModo();
+  }
+
+  function sincronizarModo(){
+    btnAscenso.classList.toggle("activo", modo() === "ascenso");
+    btnDescenso.classList.toggle("activo", modo() === "descenso");
+    construirChips();
+    refrescarLabels();
+    btnStart.textContent = "INICIAR";
+  }
+
+  function refrescarLabels(){
+    const modoTxt = modo() === "ascenso" ? "Ascenso" : "Descenso";
+    lblNivel.textContent = `${modoTxt} · Nivel ${nivelIdx()+1} · ${minActual()} min`;
+    lblEstado.classList.remove("marcha","victoria");
+    if(corriendo){
+      lblEstado.textContent = "en marcha…";
+      lblEstado.classList.add("marcha");
+    } else if(restanteMs !== null){
+      lblEstado.textContent = "en pausa";
+    } else {
+      lblEstado.textContent = "listo para arrancar";
+    }
+  }
+
+  // ---------- Chips ----------
+  function construirChips(){
+    chips.innerHTML = "";
+    seq().forEach(mins => {
+      const c = document.createElement("div");
+      c.className = "chip";
+      c.textContent = mins;
+      chips.appendChild(c);
+    });
+    refrescarChips();
+  }
+  function refrescarChips(){
+    const idx = nivelIdx();
+    [...chips.children].forEach((c,i) => {
+      c.classList.remove("hecho","actual");
+      if(i < idx) c.classList.add("hecho");
+      else if(i === idx) c.classList.add("actual");
+    });
+  }
+
+  // ---------- Timer ----------
+  function toggle(){ corriendo ? pausar() : iniciar(); }
+
+  function iniciar(){
+    if(corriendo) return;
+    if(restanteMs === null) restanteMs = minActual() * 60 * 1000;
+    corriendo = true;
+    t0 = Date.now();
+    timerId = setTimeout(completarNivel, restanteMs);
+    btnStart.textContent = "PAUSAR";
+    refrescarLabels();
+    pedirPermisoNotif();
+  }
+
+  function pausar(){
+    if(!corriendo) return;
+    detenerTimer();
+    const transcurrido = Date.now() - t0;
+    restanteMs = Math.max(0, (restanteMs || 0) - transcurrido);
+    corriendo = false;
+    btnStart.textContent = "INICIAR";
+    refrescarLabels();
+  }
+
+  function detenerTimer(){
+    if(timerId !== null){ clearTimeout(timerId); timerId = null; }
+  }
+
+  function completarNivel(){
+    detenerTimer();
+    corriendo = false;
+    restanteMs = null;
+    const ultimo = nivelIdx() === 5;
+    const modoTxt = modo() === "ascenso" ? "Ascenso" : "Descenso";
+
+    if(ultimo){
+      const titulo = modo() === "ascenso" ? "¡Ganaste! 🏔️" : "¡Llegaste a la base! 🎉";
+      const msg = modo() === "ascenso"
+        ? "Completaste la escalada entera."
+        : "Bajaste toda la montaña, sano y salvo.";
+      notificar(titulo, msg);
+      setNivelIdx(0);
+      guardarEstado();
+      refrescarChips();
+      refrescarLabels();
+      lblEstado.textContent = "¡completaste el recorrido!";
+      lblEstado.classList.remove("marcha");
+      lblEstado.classList.add("victoria");
+    } else {
+      setNivelIdx(nivelIdx() + 1);
+      guardarEstado();
+      notificar(`Nivel completo · ${modoTxt}`,
+                `Cargado el nivel ${nivelIdx()+1}: ${minActual()} min.`);
+      refrescarChips();
+      refrescarLabels();
+    }
+    btnStart.textContent = "INICIAR";
+  }
+
+  function saltar(){
+    detenerTimer();
+    corriendo = false;
+    restanteMs = null;
+    setNivelIdx(nivelIdx() + 1);
+    guardarEstado();
+    refrescarChips();
+    refrescarLabels();
+    btnStart.textContent = "INICIAR";
+  }
+
+  function reiniciar(){
+    detenerTimer();
+    corriendo = false;
+    restanteMs = null;
+    setNivelIdx(0);
+    guardarEstado();
+    refrescarChips();
+    refrescarLabels();
+    btnStart.textContent = "INICIAR";
+  }
+
+  // ---------- Notificaciones ----------
+  function pedirPermisoNotif(){
+    if("Notification" in window && Notification.permission === "default"){
+      try{ Notification.requestPermission(); }catch(e){}
+    }
+  }
+
+  function beep(){
+    try{
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if(!Ctx) return;
+      const ctx = new Ctx();
+      const notas = [880, 1174.7]; // La5, Re6 — campanita corta
+      notas.forEach((f, i) => {
+        const osc = ctx.createOscillator();
+        const g = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.value = f;
+        const t = ctx.currentTime + i * 0.18;
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(0.35, t + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.35);
+        osc.connect(g).connect(ctx.destination);
+        osc.start(t);
+        osc.stop(t + 0.4);
+      });
+      setTimeout(() => ctx.close && ctx.close(), 1200);
+    }catch(e){}
+  }
+
+  let flashId = null;
+  const tituloOriginal = document.title;
+  function flashTitulo(texto){
+    clearInterval(flashId);
+    let on = false, veces = 0;
+    flashId = setInterval(() => {
+      document.title = on ? tituloOriginal : "● " + texto;
+      on = !on;
+      if(++veces > 10){ clearInterval(flashId); document.title = tituloOriginal; }
+    }, 700);
+  }
+
+  function notificar(titulo, mensaje){
+    beep();
+    flashTitulo(titulo);
+    if("Notification" in window && Notification.permission === "granted"){
+      try{
+        new Notification(titulo, { body: mensaje });
+        return;
+      }catch(e){}
+    }
+    toast(titulo, mensaje);
+  }
+
+  let toastTimer = null;
+  function toast(titulo, mensaje){
+    $("toast-titulo").textContent = titulo;
+    $("toast-msg").textContent = mensaje;
+    const el = $("toast");
+    el.classList.add("visible");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove("visible"), 4000);
+  }
+
+  // ---------- Recomendaciones ----------
+  // Cada tupla es [tipo, texto]: "h" encabezado · "p" párrafo · "li" ítem.
+  // El texto admite **negrita** y *itálica*.
+  const RECOMENDACIONES = [
+    ["p", "**La idea central:** la duración de cada bloque debería coincidir con el peso cognitivo de la tarea, y la dirección en la que escalás debería coincidir con lo que necesita el día. Ascendé cuando tu problema es *empezar*; descendé cuando tu problema es *terminar*. El 5 ascendente hace imposible negarse; el 50 descendente gasta tu combustible pico en tu trabajo más difícil."],
+
+    ["h", "Ascendente — 5→10→20→30→40→50 — para meter cosas adentro"],
+    ["p", "Lo usás cuando estás en frío y necesitás impulso. Cada bloque se hace más largo a medida que tu foco se profundiza, así vas cargando más en la memoria de trabajo justo cuando sos capaz de sostenerlo."],
+    ["li", "**5 — inicio del sendero.** Solo activación. Despejá la pista, escribí cómo se ve \"terminado\", hacé una acción trivial. *Estudio:* una pregunta de recuerdo o releé la última nota de ayer."],
+    ["li", "**10 — precalentamiento.** La memoria de trabajo todavía no está cargada. Triage, victorias rápidas, planificá los bloques difíciles. *Estudio:* puro recuerdo — flashcards, recall, repaso (no material nuevo)."],
+    ["li", "**20 — primer bloque real.** Estás caliente. Un pedazo acotado — una sección de un doc, un bug delimitado. *Estudio:* aprendé UN concepto nuevo bien."],
+    ["li", "**30 — se abre el trabajo profundo.** Ahora podés sostener un problema a lo largo del tiempo. Construcción o escritura sostenida que necesita contexto en tu cabeza. *Estudio:* integrá el concepto nuevo con lo que ya sabés; resolvé problemas."],
+    ["li", "**40 — pico.** Tu mejor bloque. Poné acá lo más importante o lo más evitado. *Estudio:* el material más denso y de mayor rendimiento."],
+    ["li", "**50 — cima.** No pongas adquisición nueva y difícil acá — tu pico cognitivo fue el 40, y ya llevás ~2h. En su lugar, consolidá o cambiá de modo: sintetizá, explicalo-de-vuelta, práctica mezclada. *Trabajo:* pulí lo que construiste, o pasá a una tarea de flujo larga pero disfrutable."],
+
+    ["h", "Descendente — 50→40→30→20→10→5 — para sacar cosas afuera"],
+    ["p", "Lo usás solo cuando el problema de activación ya está resuelto (estás caliente, o venís directo de una sesión ascendente). Gasta tu combustible más alto en tu bloque más largo y difícil, y después el camino solo se acorta — motivación por alivio, bajando hasta casa."],
+    ["li", "**50 — el gran empujón.** Facilitá el arranque (2–3 min replanteando el objetivo), después atacá lo más grande e integrativo mientras la glucosa está más alta."],
+    ["li", "**40 — quedate en el hilo.** No cambies. Seguí alimentando el mismo trabajo."],
+    ["li", "**30 — lo difícil que queda.** Pasá de construir a resolver los pendientes complicados — debugging, las partes que necesitan pensar pero no un modelo mental nuevo."],
+    ["li", "**20 — consolidá.** Lo suficientemente corto como para que \"se hace más fácil\" haga efecto. Ajustá lo que hiciste; reformulá conceptos con tus propias palabras."],
+    ["li", "**10 — limpieza.** Cabos sueltos, práctica de recuerdo, administración postergada."],
+    ["li", "**5 — el aterrizaje.** Escribí el inicio del sendero para tu *próxima* sesión ascendente — la única acción de 5 min que la arranca. Registrá, cerrá pestañas, listo."],
+
+    ["h", "Pausas"],
+    ["p", "**Las pausas escalan con el bloque, y el escalado se invierte con la dirección.** Ascendente: pequeños respiros al principio, protegé una pausa real (caminata, agua, sin pantalla) antes del tramo 40–50. Descendente: tu pausa más grande viene *temprano*, justo después del agotador 50, para proteger el 40 — después las pausas se achican con los bloques."],
+
+    ["h", "Dos reglas que valen en cualquier dirección"],
+    ["p", "Una curva completa es una expedición, no un loop diario — ascender son ~2h35m de foco, ~3h+ con pausas; hacerlo una vez bien le gana a hacerlo dos veces mal. Y no encadenes ambas en una sentada (5→50→50→5 son ~5 horas — eso quema tu pico). Elegí una dirección por día."],
+
+    ["h", "Cómo se enganchan"],
+    ["p", "El 5 final del descenso planta el 5 inicial del ascenso. Ascendé para cargar y llegar a tu pico; descendé para entregar y bajar; el descenso le da a la próxima escalada su arranque fácil."],
+    ["p", "Un lazo con tu propio setup: la duración del bloque ya ordena el estudio *por tipo* — chico = recuerdo, medio = codificación, grande = integración, final = consolidación. Si tu panel de foco-por-tema etiqueta cada sesión según en qué bloque cayó, obtenés un proxy barato de *qué tipo* de estudio recibió realmente un tema, no solo los minutos — más cerca de la señal de aprendizaje que te importa."],
+
+    ["p", "**Elegí solo una según tu motivación inicial.**"],
+  ];
+
+  function escapeHtml(s){
+    return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+  function inline(texto){
+    // **negrita** y *itálica*, sobre texto ya escapado
+    return escapeHtml(texto)
+      .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+      .replace(/\*([^*]+)\*/g, "<em>$1</em>");
+  }
+  function renderReco(){
+    const cuerpo = $("reco-cuerpo");
+    cuerpo.innerHTML = RECOMENDACIONES.map(([tipo, texto]) => {
+      const clase = tipo === "h" ? "reco-h" : tipo === "li" ? "reco-li" : "reco-p";
+      const tag = tipo === "h" ? "h3" : "div";
+      return `<${tag} class="${clase}">${inline(texto)}</${tag}>`;
+    }).join("");
+  }
+
+  function abrirReco(){
+    overlay.classList.add("abierto");
+    $("btn-cerrar-reco").focus();
+  }
+  function cerrarReco(){ overlay.classList.remove("abierto"); }
+
+  // ---------- Eventos ----------
+  btnAscenso.addEventListener("click", () => cambiarModo("ascenso"));
+  btnDescenso.addEventListener("click", () => cambiarModo("descenso"));
+  btnStart.addEventListener("click", toggle);
+  btnSkip.addEventListener("click", saltar);
+  btnReset.addEventListener("click", reiniciar);
+  btnReco.addEventListener("click", abrirReco);
+  $("btn-cerrar-reco").addEventListener("click", cerrarReco);
+  overlay.addEventListener("click", e => { if(e.target === overlay) cerrarReco(); });
+  document.addEventListener("keydown", e => {
+    if(e.key === "Escape" && overlay.classList.contains("abierto")) cerrarReco();
+  });
+
+  // ---------- Arranque ----------
+  renderReco();
+  sincronizarModo();
+})();
+</script>
+</body>
+</html>
