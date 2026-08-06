@@ -3,7 +3,7 @@
 <head>
 
 <link rel="icon" href="./clock.jpg">
-
+<link rel="preload" href="./boton-sonido.mp3" as="audio">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#1e1e24">
@@ -534,6 +534,21 @@
     toastTimer = setTimeout(() => el.classList.remove("visible"), 4000);
   }
 
+    // ---------- Sonido de boton ----------
+
+const clickAudio = new Audio("./click.mp3");
+clickAudio.volume = 0.5;
+clickAudio.preload = "auto";
+
+function clickSound(){
+  // clonar el nodo permite disparar clicks rápidos superpuestos
+  // (sin esto, si apretás dos botones seguido el segundo click
+  // corta el audio del primero en vez de sonar encima)
+  const s = clickAudio.cloneNode();
+  s.volume = clickAudio.volume;
+  s.play().catch(()=>{}); // catch por si el navegador bloquea autoplay
+}
+  
   // ---------- Recomendaciones ----------
   // Cada tupla es [tipo, texto]: "h" encabezado · "p" párrafo · "li" ítem.
   // El texto admite **negrita** y *itálica*.
