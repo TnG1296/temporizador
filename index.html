@@ -77,6 +77,38 @@
   }
   .modo-btn.activo{background:var(--accent);color:var(--accent-txt)}
 
+  /* Recuadro de tarea actual */
+  .tarea-box{
+    margin:0 0 18px;
+    padding:10px 14px;
+    background:var(--panel);
+    border-radius:8px;
+    text-align:left;
+  }
+  .tarea-box label{
+    display:block;
+    font-size:11px;
+    font-weight:700;
+    color:var(--muted);
+    margin-bottom:4px;
+    text-transform:uppercase;
+    letter-spacing:.5px;
+  }
+  .tarea-input{
+    width:100%;
+    background:transparent;
+    border:0;
+    border-bottom:1px solid var(--chip-bg);
+    color:var(--texto);
+    font-family:inherit;
+    font-size:14px;
+    padding:4px 2px;
+    outline:none;
+    transition:border-color .12s;
+  }
+  .tarea-input:focus{border-bottom-color:var(--accent)}
+  .tarea-input::placeholder{color:var(--muted)}
+
   /* Nivel y estado */
   .lbl-nivel{
     font-size:19px;
@@ -238,6 +270,11 @@
       <button class="modo-btn" id="btn-descenso" type="button">↓ Descenso</button>
     </div>
 
+    <div class="tarea-box">
+      <label for="input-tarea">Tarea actual</label>
+      <input type="text" id="input-tarea" class="tarea-input" placeholder="¿En qué estás trabajando?" maxlength="120" autocomplete="off">
+    </div>
+
     <div class="lbl-nivel" id="lbl-nivel"></div>
     <div class="lbl-estado" id="lbl-estado"></div>
 
@@ -289,7 +326,7 @@
   // Replica ~/.temporizador/estado.json de la versión Python.
   let _memoria = null;
   function cargarEstado(){
-    const base = { modo:"ascenso", nivel:{ ascenso:0, descenso:0 } };
+    const base = { modo:"ascenso", nivel:{ ascenso:0, descenso:0 }, tarea:"" };
     try{
       const crudo = localStorage.getItem(STORAGE_KEY);
       if(crudo){
@@ -298,6 +335,7 @@
         const n = d.nivel || {};
         base.nivel.ascenso  = ((parseInt(n.ascenso,10)  || 0) % 6 + 6) % 6;
         base.nivel.descenso = ((parseInt(n.descenso,10) || 0) % 6 + 6) % 6;
+        base.tarea = typeof d.tarea === "string" ? d.tarea : "";
       }
     }catch(e){ /* sin storage: arranca en base */ }
     return base;
@@ -326,6 +364,7 @@
   const $ = id => document.getElementById(id);
   const btnAscenso = $("btn-ascenso");
   const btnDescenso = $("btn-descenso");
+  const inputTarea = $("input-tarea");
   const lblNivel = $("lbl-nivel");
   const lblEstado = $("lbl-estado");
   const chips = $("chips");
@@ -334,6 +373,14 @@
   const btnReset = $("btn-reset");
   const btnReco = $("btn-reco");
   const overlay = $("overlay");
+
+  // ---------- Tarea actual ----------
+  let tareaGuardarId = null;
+  function alCambiarTarea(){
+    estado.tarea = inputTarea.value;
+    clearTimeout(tareaGuardarId);
+    tareaGuardarId = setTimeout(guardarEstado, 300); // debounce para no escribir en cada tecla
+  }
 
   // ---------- Modo ----------
   function cambiarModo(nuevo){
@@ -612,6 +659,7 @@ function clickSound(){
   // ---------- Eventos ----------
   btnAscenso.addEventListener("click", () => cambiarModo("ascenso"));
   btnDescenso.addEventListener("click", () => cambiarModo("descenso"));
+  inputTarea.addEventListener("input", alCambiarTarea);
   btnStart.addEventListener("click", toggle);
   btnSkip.addEventListener("click", saltar);
   btnReset.addEventListener("click", reiniciar);
@@ -627,6 +675,7 @@ function clickSound(){
   });
 
   // ---------- Arranque ----------
+  inputTarea.value = estado.tarea || "";
   renderReco();
   sincronizarModo();
 })();
