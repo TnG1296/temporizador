@@ -623,6 +623,10 @@ function clickSound(){
     if(e.key === "Escape" && overlay.classList.contains("abierto")) cerrarReco();
   });
 
+    document.addEventListener("click", e => {
+    if(e.target.closest("button")) clickSound();
+  });
+
   // ---------- Arranque ----------
   renderReco();
   sincronizarModo();
